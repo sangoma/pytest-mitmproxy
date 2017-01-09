@@ -1,0 +1,10 @@
+site_name: pytest-mitmproxy
+site_description: Pytest fixtures for creating mitmproxy instances as-needed with filterable captures for later analysis
+site_author: Terry Kerr
+
+theme: readthedocs
+
+repo_url: https://github.com/sangoma/pytest-mitmproxy
+
+pages:
+- Home: index.md
