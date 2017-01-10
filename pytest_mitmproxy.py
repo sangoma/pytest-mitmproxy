@@ -40,18 +40,23 @@ def new_proxy(name, scope, flt=None):
     args = ["mitmdump", "--port=0", "--wfile={}".format(dump_file)]
     args.append(flt) if flt else None
 
-    with TemporaryFile() as fp:
+    def read(fp):
+        fp.seek(0)
+        return fp.read().decode("utf-8")
 
+    with TemporaryFile() as stdout, TemporaryFile() as stderr:
         ps = Popen(
             args,
-            stdout=fp,
-            universal_newlines=True,
-            bufsize=1
+            stdout=stdout,
+            stderr=stderr
         )
         if ps.poll() is not None:
-            raise SubprocessError("mitmdump was unable to run")
-        fp.seek(0)
-        status = fp.read().decode("utf-8")
+            raise CalledProcessError(
+                ps.returncode,
+                ps.args,
+                output=read(stderr)
+            )
+        status = read(stdout)
         url = urlparse(re.search(".*(http://[^\n]+)\n", status).group(1))
         yield url
 
