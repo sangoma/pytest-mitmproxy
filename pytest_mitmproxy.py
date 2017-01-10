@@ -62,3 +62,11 @@ def proxy(request) -> urllib.parse.ParseResult:
     flt = mark.args[0] if mark else None
     with new_proxy(request.node.name, request.scope, flt) as url:
         yield url
+
+
+@pytest.fixture(scope="session")
+def session_proxy(request) -> urllib.parse.ParseResult:
+    mark = request.node.get_marker("dump_filter")
+    flt = mark.args[0] if mark else None
+    with new_proxy(request.node.name, request.scope, flt) as url:
+        yield url

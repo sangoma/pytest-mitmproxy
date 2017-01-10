@@ -30,7 +30,7 @@ TODO
 -----
 
 * Don't hardcode the traffic dump's save location
-* Fixtures for more than just the function scope
+* Fixtures for more than just the function and session scopes
 * Don't clobber the previously-saved traffic dumps at plugin load time
 * Write some tests
 
