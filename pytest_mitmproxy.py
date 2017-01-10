@@ -1,13 +1,18 @@
 # -*- coding: utf-8 -*-
 import re
 import os
+import six
+import errno
 import shutil
 import pytest
-import urllib
 from contextlib import contextmanager
-from subprocess import Popen, SubprocessError, CalledProcessError
 from tempfile import TemporaryFile
-from urllib.parse import urlparse
+if six.PY3:
+    from urllib.parse import urlparse
+    from subprocess import Popen, CalledProcessError, TimeoutExpired
+elif six.PY2:
+    from urlparse import urlparse
+    from subprocess32 import Popen, CalledProcessError, TimeoutExpired
 
 # clean the dumps each run
 if os.path.isdir("traffic_dumps"):
@@ -15,7 +20,7 @@ if os.path.isdir("traffic_dumps"):
 
 
 @contextmanager
-def new_proxy(name: str, scope: str, flt: str=None) -> urllib.parse.ParseResult:
+def new_proxy(name, scope, flt=None):
     ''' Start a new mitmdump process and
     return the address for clients to connect
 
@@ -24,7 +29,12 @@ def new_proxy(name: str, scope: str, flt: str=None) -> urllib.parse.ParseResult:
     '''
     dump_dir = "traffic_dumps"
 
-    os.makedirs(os.path.join(dump_dir, scope), mode=0o755, exist_ok=True)
+    try:
+        os.makedirs(os.path.join(dump_dir, scope), mode=0o755)
+    except OSError as err:
+        if err.errno != errno.EEXIST:
+            raise
+
     dump_file = os.path.join(dump_dir, scope, name)
 
     args = ["mitmdump", "--port=0", "--wfile={}".format(dump_file)]
@@ -45,19 +55,23 @@ def new_proxy(name: str, scope: str, flt: str=None) -> urllib.parse.ParseResult:
         url = urlparse(re.search(".*(http://[^\n]+)\n", status).group(1))
         yield url
 
-    try:
         ps.terminate()
-        retcode = ps.wait(timeout=5)
-    except TimeoutExpired:
-        ps.kill()
-        retcode = ps.wait()
+        try:
+            ps.wait(timeout=5)
+        except TimeoutExpired:
+            ps.kill()
+            ps.wait()
 
-    if retcode != 0:
-        raise CalledProcessError(retcode, ps.args)
+        if ps.returncode != 0:
+            raise CalledProcessError(
+                ps.returncode,
+                ps.args,
+                output=read(stderr)
+            )
 
 
 @pytest.fixture
-def proxy(request) -> urllib.parse.ParseResult:
+def proxy(request):
     mark = request.node.get_marker("dump_filter")
     flt = mark.args[0] if mark else None
     with new_proxy(request.node.name, request.scope, flt) as url:
@@ -65,7 +79,7 @@ def proxy(request) -> urllib.parse.ParseResult:
 
 
 @pytest.fixture(scope="session")
-def session_proxy(request) -> urllib.parse.ParseResult:
+def session_proxy(request):
     mark = request.node.get_marker("dump_filter")
     flt = mark.args[0] if mark else None
     with new_proxy(request.node.name, request.scope, flt) as url:
