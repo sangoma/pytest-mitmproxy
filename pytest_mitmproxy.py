@@ -24,8 +24,8 @@ def new_proxy(name: str, scope: str, flt: str=None) -> urllib.parse.ParseResult:
     '''
     dump_dir = "traffic_dumps"
 
-    os.makedirs("{}/{}".format(dump_dir, scope), mode=0o755, exist_ok=True)
-    dump_file = "{}/{}/{}".format(dump_dir, scope, name)
+    os.makedirs(os.path.join(dump_dir, scope), mode=0o755, exist_ok=True)
+    dump_file = os.path.join(dump_dir, scope, name)
 
     args = ["mitmdump", "--port=0", "--wfile={}".format(dump_file)]
     args.append(flt) if flt else None
