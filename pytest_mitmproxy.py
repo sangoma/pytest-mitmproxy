@@ -5,7 +5,7 @@ import shutil
 import pytest
 import urllib
 from contextlib import contextmanager
-from subprocess import Popen, PIPE, SubprocessError
+from subprocess import Popen, SubprocessError, CalledProcessError
 from tempfile import TemporaryFile
 from urllib.parse import urlparse
 
@@ -44,7 +44,16 @@ def new_proxy(name: str, scope: str, flt: str=None) -> urllib.parse.ParseResult:
         status = fp.read().decode("utf-8")
         url = urlparse(re.search(".*(http://[^\n]+)\n", status).group(1))
         yield url
-    ps.terminate()
+
+    try:
+        ps.terminate()
+        retcode = ps.wait(timeout=5)
+    except TimeoutExpired:
+        ps.kill()
+        retcode = ps.wait()
+
+    if retcode != 0:
+        raise CalledProcessError(retcode, ps.args)
 
 
 @pytest.fixture
