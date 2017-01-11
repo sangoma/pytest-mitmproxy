@@ -45,11 +45,7 @@ def new_proxy(name, scope, flt=None):
         return fp.read().decode("utf-8")
 
     with TemporaryFile() as stdout, TemporaryFile() as stderr:
-        ps = Popen(
-            args,
-            stdout=stdout,
-            stderr=stderr
-        )
+        ps = Popen(args, stdout=stdout, stderr=stderr)
         if ps.poll() is not None:
             raise CalledProcessError(
                 ps.returncode,
