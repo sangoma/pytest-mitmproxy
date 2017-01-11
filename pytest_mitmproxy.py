@@ -19,6 +19,15 @@ if os.path.isdir("traffic_dumps"):
     shutil.rmtree("traffic_dumps")
 
 
+def pytest_addoption(parser):
+    parser.addoption(
+        "--mitmproxy-filter",
+        action="store",
+        default=None,
+        help="filter specification for mitmproxy"
+    )
+
+
 @contextmanager
 def new_proxy(name, scope, flt=None):
     ''' Start a new mitmdump process and
@@ -73,15 +82,13 @@ def new_proxy(name, scope, flt=None):
 
 @pytest.fixture
 def proxy(request):
-    mark = request.node.get_marker("dump_filter")
-    flt = mark.args[0] if mark else None
+    flt = request.config.getoption("--mitmproxy-filter")
     with new_proxy(request.node.name, request.scope, flt) as url:
         yield url
 
 
 @pytest.fixture(scope="session")
 def session_proxy(request):
-    mark = request.node.get_marker("dump_filter")
-    flt = mark.args[0] if mark else None
+    flt = request.config.getoption("--mitmproxy-filter")
     with new_proxy(request.node.name, request.scope, flt) as url:
         yield url
