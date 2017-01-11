@@ -47,7 +47,8 @@ def new_proxy(name, scope, flt=None):
     dump_file = os.path.join(dump_dir, scope, name)
 
     args = ["mitmdump", "--port=0", "--wfile={}".format(dump_file)]
-    args.append(flt) if flt else None
+    if flt:
+        args.append(flt)
 
     def read(fp):
         fp.seek(0)
