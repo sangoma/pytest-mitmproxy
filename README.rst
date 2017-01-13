@@ -33,6 +33,7 @@ TODO
 * Fixtures for more than just the function and session scopes
 * Don't clobber the previously-saved traffic dumps at plugin load time
 * Write some tests
+* More cleanliness in process management (catch all possible hangs/fails)
 
 
 License
