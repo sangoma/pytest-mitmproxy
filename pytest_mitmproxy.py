@@ -2,6 +2,7 @@
 import re
 import os
 import six
+import time
 import errno
 import shutil
 import pytest
@@ -54,17 +55,19 @@ def new_proxy(name, scope, flt=None):
         fp.seek(0)
         return fp.read().decode("utf-8")
 
-    with TemporaryFile() as stdout, TemporaryFile() as stderr:
-        ps = Popen(args, stdout=stdout, stderr=stderr)
-        if ps.poll() is not None:
+    with TemporaryFile() as stdout:
+        ps = Popen(args, stdout=stdout)
+        # Wait for status line
+        for _ in range(50):
+            if stdout.tell() > 0:
+                break
+            time.sleep(0.1)
+        if stdout.tell() == 0:
             raise CalledProcessError(
                 ps.returncode,
                 ps.args,
-                output=read_all(stderr)
+                output=None
             )
-        # Wait for status line TODO: deal with ps hanging here
-        while stdout.tell() == 0:
-            pass
         status = read_all(stdout)
         url = urlparse(re.search(".*(http://[^\n]+)\n", status).group(1))
         yield url
@@ -80,7 +83,7 @@ def new_proxy(name, scope, flt=None):
             raise CalledProcessError(
                 ps.returncode,
                 ps.args,
-                output=read_all(stderr)
+                output=read_all(stdout)
             )
 
 
