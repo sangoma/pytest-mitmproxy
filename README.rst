@@ -23,7 +23,8 @@ has quite afew TODOs to wrap up before being promoted to 'stable'
 Requirements
 ------------
 
-* mitmproxy
+* mitmproxy (python3 only, so must be installed seperately for python2 use)
+* subprocess32 for python2
 
 
 TODO
@@ -34,6 +35,7 @@ TODO
 * Don't clobber the previously-saved traffic dumps at plugin load time
 * Write some tests
 * More cleanliness in process management (catch all possible hangs/fails)
+* Capture `mitmdumps` stdout in a seperate thread
 
 
 License
